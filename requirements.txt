@@ -1,0 +1,8 @@
+setuptools
+wheel
+python-dotenv
+
+pytest
+pygithub
+
+custom-python-logger

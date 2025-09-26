@@ -1,0 +1,14 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say hello
+        run: echo "its ok"
