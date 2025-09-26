@@ -172,9 +172,9 @@ github_client = GitHubClient(
 )
 
 # Create a tag
-tag = github_client.tag.create(
+tag = github_client.tag.create_by_branch(
     tag_name="v1.0.0",
-    sha=github_client.branch.list()[0].commit.sha,
+    from_branch="main",
     message="Release version 1.0.0"
 )
 print(f"Created tag: {tag.name}")
