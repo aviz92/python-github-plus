@@ -268,7 +268,6 @@ class GitHubClient:
         self.logger = get_logger(self.__class__.__name__)
         self.github_access_token = access_token or os.environ.get("GITHUB_ACCESS_TOKEN")
 
-        # self.github = Github(self.github_access_token)
         self.github = Github(auth=Auth.Token(self.github_access_token))
         self.is_connected(raise_if_not_connected=True)
 
