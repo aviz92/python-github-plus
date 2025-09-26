@@ -172,16 +172,16 @@ class GitHubTagService:
         self.logger = get_logger(self.__class__.__name__)
         self.repo = repo
 
-    def create_by_sha(self, tag_name: str, sha: str, message: Optional[str] = None) -> GitTag:
+    def create_from_sha(self, tag_name: str, sha: str, message: Optional[str] = None) -> GitTag:
         tag = self.repo.create_git_tag(tag=tag_name, message=message or tag_name, object="main", type="commit")
         self.repo.create_git_ref(ref=f"refs/tags/{tag_name}", sha=tag.sha)
         self.logger.info(f"✅ Tag '{tag_name}' created at commit {sha}")
         return tag
 
-    def create_by_branch(self, tag_name: str, from_branch: str, message: Optional[str] = None) -> GitTag:
+    def create(self, tag_name: str, from_branch: str, message: Optional[str] = None) -> GitTag:
         branch = self.repo.get_branch(from_branch)
         sha = branch.commit.sha
-        return self.create_by_sha(tag_name=tag_name, sha=sha, message=message)
+        return self.create_from_sha(tag_name=tag_name, sha=sha, message=message)
 
     def delete(self, tag_name: str) -> None:
         ref = self.repo.get_git_ref(f"tags/{tag_name}")

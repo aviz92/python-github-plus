@@ -172,7 +172,7 @@ github_client = GitHubClient(
 )
 
 # Create a tag
-tag = github_client.tag.create_by_branch(
+tag = github_client.tag.create(
     tag_name="v1.0.0",
     from_branch="main",
     message="Release version 1.0.0"

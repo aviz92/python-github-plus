@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-package_version = '0.0.1'
+package_version = '0.0.2'
 
 package_name = 'python-github-plus'
 package_description = 'Enhanced Python GitHub client.'
