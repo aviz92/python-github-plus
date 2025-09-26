@@ -1,5 +1,5 @@
 # Python GitHub Plus
-An enhanced Python client for GitHub that extends the functionality of the official `python-github` package, providing better error handling, merge request management, branch operations, and more.
+An enhanced Python client for GitHub that extends the functionality of the official `pygithub` package, providing better error handling, merge request management, branch operations, and more.
 
 ---
 
