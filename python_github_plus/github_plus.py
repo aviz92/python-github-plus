@@ -63,7 +63,7 @@ class GitHubWorkflowService:
         """List workflows configured in the repo (.github/workflows)."""
         return list(self.repo.get_workflows())
 
-    def trigger(self, workflow_name: str, branch: str = "main", inputs: Optional[dict] = None) -> Workflow:
+    def trigger(self, workflow_name: str, branch_name: str = "main", inputs: Optional[dict] = None) -> Workflow:
         """
         Dispatch a workflow by name on a given branch.
         Requires 'workflow_dispatch' defined in the workflow YAML.
@@ -73,8 +73,8 @@ class GitHubWorkflowService:
             raise ValueError(f"❌ Workflow '{workflow_name}' not found.")
 
         workflow = workflows[workflow_name]
-        workflow.create_dispatch(ref=branch, inputs=inputs or {})
-        self.logger.info(f"🚀 Triggered workflow '{workflow_name}' on branch '{branch}'")
+        workflow.create_dispatch(ref=branch_name, inputs=inputs or {})
+        self.logger.info(f"🚀 Triggered workflow '{workflow_name}' on branch '{branch_name}'")
 
         # Note: This returns immediately; to track status, use wait_until_finished
         return workflow
@@ -200,6 +200,11 @@ class GitHubPRService:
         self.logger.info(f"✅ PR '{title}' created: #{pr.number}")
         return pr
 
+    def assign(self, pr_number: int, assignees: str) -> None:
+        issue = self.repo.get_issue(pr_number)  # fetch the same PR as an issue
+        issue.add_to_assignees(assignees)  # or multiple users
+        self.logger.info(f"✅ PR #{pr_number} assigned to {assignees}")
+
     def status(self, number: int) -> str:
         pr = self.repo.get_pull(number)
         if pr.merged:
@@ -240,8 +245,8 @@ class GitHubFileService:
     def get(self, path: str, ref: str = "main") -> ContentFile:
         return self.repo.get_contents(path, ref=ref)
 
-    def fetch_content(self, path: str, ref: str = "main") -> str:
-        file = self.repo.get_contents(path, ref=ref)
+    def fetch_content(self, file_path: str, ref: str = "main") -> str:
+        file = self.repo.get_contents(file_path, ref=ref)
         return file.decoded_content.decode("utf-8")
 
     # def update(self, path: str, branch: str, content: str, message: str) -> None:

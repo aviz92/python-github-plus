@@ -67,7 +67,7 @@ branch = github_client.branch.create(
     branch_name="feature/new-feature",
     from_branch="main"
 )
-print(f"Created branch: {branch.name}")
+print(f"Created branch: {branch.ref}")
 
 # List branches
 branches = github_client.branch.list()
@@ -124,21 +124,21 @@ github_client = GitHubClient(
 
 # Trigger a workflows
 workflows = github_client.workflow.trigger(
+    workflow_name="CI",
     branch_name="main",
-    variables={"ENVIRONMENT": "production"}
 )
 print(f"Workflow triggered: {workflows.id}")
 
 time.sleep(5)  # wait a bit for the workflow to register
-run_id = workflows.last_run_by_id(workflow_id=workflows.id)
+run_id = github_client.workflow.last_run_by_id(workflow_id=workflows.id)
 
 # Check workflow run status
-status = github_client.workflow.status(run_id=run_id)
+status = github_client.workflow.status(run_id=run_id.id)
 print(f"Workflow run status: {status}")
 
 # Wait for workflows completion
 final_status = github_client.workflow.wait_until_finished(
-    run_id=run_id,
+    run_id=run_id.id,
     check_interval=30,
     timeout=3600
 )
@@ -174,7 +174,7 @@ github_client = GitHubClient(
 # Create a tag
 tag = github_client.tag.create(
     tag_name="v1.0.0",
-    from_branch="main",
+    sha=github_client.branch.list()[0].commit.sha,
     message="Release version 1.0.0"
 )
 print(f"Created tag: {tag.name}")
