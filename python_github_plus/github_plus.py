@@ -90,8 +90,8 @@ class GitHubWorkflowService:
         runs = workflows[workflow_name].get_runs(branch=branch) if branch else workflows[workflow_name].get_runs()
         return list(runs)
 
-    def get_last_run_by_id(self, run_id: int) -> WorkflowRun:
-        return self.repo.get_workflow(run_id).get_runs()[0]
+    def last_run_by_id(self, workflow_id: int) -> WorkflowRun:
+        return self.repo.get_workflow(workflow_id).get_runs()[0]
 
     def status(self, run_id: int) -> str:
         """ Get the current status of a workflow run. run_id is the ID of the run, not the workflow. """

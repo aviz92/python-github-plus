@@ -10,7 +10,7 @@ An enhanced Python client for GitHub that extends the functionality of the offic
 - ✅ **Project management** (members, info, etc.)
 - ✅ **Branch operations** (create, delete, protect, list, etc.)
 - ✅ **Pull Request management** (create, merge, approve, assign, comment, etc.)
-- ✅ **Pipeline operations** (trigger, monitor, wait for completion, etc.)
+- ✅ **Workflow operations** (trigger, monitor, wait for completion, etc.)
 - ✅ **Tag management** (create, delete, list, etc.)
 - ✅ **File operations** (read, create, update, delete, etc.)
 
@@ -111,8 +111,10 @@ github_client.pull_request.approve(pr.number)
 github_client.pull_request.merge(pr.number)
 ```
 
-### Pipeline Operations
+### Workflow Operations
+
 ```python
+import time
 from python_github_plus import GitHubClient
 
 github_client = GitHubClient(
@@ -121,23 +123,26 @@ github_client = GitHubClient(
 )
 
 # Trigger a workflows
-workflows = github_client.workflows.trigger(
+workflows = github_client.workflow.trigger(
     branch_name="main",
     variables={"ENVIRONMENT": "production"}
 )
-print(f"Pipeline triggered: {workflows.id}")
+print(f"Workflow triggered: {workflows.id}")
 
-# Check workflows status
-status = github_client.workflows.status(workflows.id)
-print(f"Pipeline status: {status}")
+time.sleep(5)  # wait a bit for the workflow to register
+run_id = workflows.last_run_by_id(workflow_id=workflows.id)
+
+# Check workflow run status
+status = github_client.workflow.status(run_id=run_id)
+print(f"Workflow run status: {status}")
 
 # Wait for workflows completion
-final_status = github_client.workflows.wait_until_finished(
-    workflows.id, 
-    check_interval=30, 
+final_status = github_client.workflow.wait_until_finished(
+    run_id=run_id,
+    check_interval=30,
     timeout=3600
 )
-print(f"Pipeline completed with status: {final_status}")
+print(f"Workflow run completed with status: {final_status}")
 ```
 
 ### File Operations
