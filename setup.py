@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 package_version = '0.0.1'
 
-package_name = 'python-gitlab-plus'
+package_name = 'python-github-plus'
 package_description = 'Enhanced Python GitLab client.'
 
 package_name_ = package_name.replace('-', '_')
