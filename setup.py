@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 package_version = '0.0.1'
 
 package_name = 'python-github-plus'
-package_description = 'Enhanced Python GitLab client.'
+package_description = 'Enhanced Python GitHub client.'
 
 package_name_ = package_name.replace('-', '_')
 package_long_description_content_type = 'text/markdown'
