@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-package_version = '0.0.3'
+package_version = '0.0.1'
 
 package_name = 'python-gitlab-plus'
 package_description = 'Enhanced Python GitLab client.'
