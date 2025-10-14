@@ -1,17 +1,17 @@
+import builtins
 import os
 import time
 from enum import Enum
-from typing import Optional, List
 
-from github import Github, Auth, GithubException
+from custom_python_logger import get_logger
+from github import Auth, Github, GithubException
+from github.Branch import Branch
+from github.ContentFile import ContentFile
 from github.GitRef import GitRef
 from github.GitTag import GitTag
-from github.Repository import Repository
-from github.Branch import Branch
-from github.Tag import Tag
 from github.PullRequest import PullRequest
-from github.ContentFile import ContentFile
-from custom_python_logger import get_logger
+from github.Repository import Repository
+from github.Tag import Tag
 from github.Workflow import Workflow
 from github.WorkflowRun import WorkflowRun
 
@@ -29,14 +29,14 @@ class GitHubWorkflowStatus(Enum):
 
 
 class GitHubProjectService:
-    def __init__(self, repo: Repository):
+    def __init__(self, repo: Repository) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.repo = repo
 
     def get_info(self) -> Repository:
         return self.repo
 
-    def list_members(self):
+    def list_members(self) -> list:
         return list(self.repo.get_collaborators())
 
     def add_member(self, username: str, permission: str = "push") -> None:
@@ -55,7 +55,7 @@ class GitHubProjectService:
 
 
 class GitHubWorkflowService:
-    def __init__(self, repo: Repository):
+    def __init__(self, repo: Repository) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.repo = repo
 
@@ -63,7 +63,7 @@ class GitHubWorkflowService:
         """List workflows configured in the repo (.github/workflows)."""
         return list(self.repo.get_workflows())
 
-    def trigger(self, workflow_name: str, branch_name: str = "main", inputs: Optional[dict] = None) -> Workflow:
+    def trigger(self, workflow_name: str, branch_name: str = "main", inputs: dict | None = None) -> Workflow:
         """
         Dispatch a workflow by name on a given branch.
         Requires 'workflow_dispatch' defined in the workflow YAML.
@@ -82,7 +82,7 @@ class GitHubWorkflowService:
     def get_workflow_by_id(self, workflow_id: int) -> Workflow:
         return self.repo.get_workflow(workflow_id)
 
-    def list_runs(self, workflow_name: str, branch: Optional[str] = None) -> List[WorkflowRun]:
+    def list_runs(self, workflow_name: str, branch: str | None = None) -> builtins.list[WorkflowRun]:
         workflows = {wf.name: wf for wf in self.repo.get_workflows()}
         if workflow_name not in workflows:
             raise ValueError(f"❌ Workflow '{workflow_name}' not found.")
@@ -94,33 +94,32 @@ class GitHubWorkflowService:
         return self.repo.get_workflow(workflow_id).get_runs()[0]
 
     def status(self, run_id: int) -> str:
-        """ Get the current status of a workflow run. run_id is the ID of the run, not the workflow. """
+        """Get the current status of a workflow run. run_id is the ID of the run, not the workflow."""
         run = self.repo.get_workflow_run(run_id)
         return run.status  # "queued", "in_progress", "completed"
 
-    def conclusion(self, run_id: int) -> Optional[str]:
-        """ Get the conclusion of a completed workflow run. None if still running. run_id is the ID of the run, not the workflow. """
+    def conclusion(self, run_id: int) -> str | None:
+        """
+        Get the conclusion of a completed workflow run.
+        None if still running. run_id is the ID of the run, not the workflow.
+        """
         run = self.repo.get_workflow_run(run_id)
         return run.conclusion  # "success", "failure", "cancelled", None if still running
 
-    def wait_until_finished(self, run_id: int, check_interval=10, timeout: Optional[int] = None) -> str:
+    def wait_until_finished(self, run_id: int, check_interval: int = 10, timeout: int = 10) -> str:
         start_time = time.time()
-        while True:
+        while (time.time() - start_time) >= timeout:  # pylint: disable=W0149
             run = self.repo.get_workflow_run(run_id)
-
             if run.status == "completed":
                 self.logger.info(f"✅ Workflow run {run_id} finished with conclusion = {run.conclusion}")
                 return run.conclusion
-
-            if timeout and (time.time() - start_time) > timeout:
-                raise TimeoutError(f"⏰ Workflow run {run_id} did not complete within {timeout} seconds.")
-
             self.logger.debug(f"⏳ Workflow run {run_id} still {run.status}...")
             time.sleep(check_interval)
+        raise TimeoutError(f"⏰ Workflow run {run_id} did not complete within {timeout} seconds.")
 
 
 class GitHubBranchService:
-    def __init__(self, repo: Repository):
+    def __init__(self, repo: Repository) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.repo = repo
 
@@ -146,7 +145,7 @@ class GitHubBranchService:
         dismiss_stale_reviews: bool = True,
         required_approving_review_count: int = 1,
         require_status_checks: bool = False,
-        status_check_contexts: Optional[List[str]] = None,
+        status_check_contexts: builtins.list[str] | None = None,
     ) -> None:
         """
         Protect a branch with common settings.
@@ -168,17 +167,17 @@ class GitHubBranchService:
 
 
 class GitHubTagService:
-    def __init__(self, repo: Repository):
+    def __init__(self, repo: Repository) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.repo = repo
 
-    def create_from_sha(self, tag_name: str, sha: str, message: Optional[str] = None) -> GitTag:
+    def create_from_sha(self, tag_name: str, sha: str, message: str | None = None) -> GitTag:
         tag = self.repo.create_git_tag(tag=tag_name, message=message or tag_name, object="main", type="commit")
         self.repo.create_git_ref(ref=f"refs/tags/{tag_name}", sha=tag.sha)
         self.logger.info(f"✅ Tag '{tag_name}' created at commit {sha}")
         return tag
 
-    def create(self, tag_name: str, from_branch: str, message: Optional[str] = None) -> GitTag:
+    def create(self, tag_name: str, from_branch: str, message: str | None = None) -> GitTag:
         branch = self.repo.get_branch(from_branch)
         sha = branch.commit.sha
         return self.create_from_sha(tag_name=tag_name, sha=sha, message=message)
@@ -193,7 +192,7 @@ class GitHubTagService:
 
 
 class GitHubPRService:
-    def __init__(self, repo: Repository):
+    def __init__(self, repo: Repository) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.repo = repo
 
@@ -243,7 +242,7 @@ class GitHubPRService:
 
 
 class GitHubFileService:
-    def __init__(self, repo: Repository):
+    def __init__(self, repo: Repository) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.repo = repo
 
@@ -273,8 +272,9 @@ class GitHubFileService:
 # Facade / User Interface #
 # ----------------------- #
 
+
 class GitHubClient:
-    def __init__(self, access_token: Optional[str], repo_full_name: str):
+    def __init__(self, access_token: str | None, repo_full_name: str) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.github_access_token = access_token or os.environ.get("GITHUB_ACCESS_TOKEN")
 
@@ -297,6 +297,6 @@ class GitHubClient:
         except Exception as e:
             msg = f"❌ Failed to authenticate with GitHub: {e}"
             if raise_if_not_connected:
-                raise ValueError(msg)
+                raise ValueError(msg) from e
             self.logger.exception(msg)
             return False
