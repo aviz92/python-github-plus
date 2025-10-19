@@ -274,7 +274,7 @@ class GitHubFileService:
 
 
 class GitHubClient:
-    def __init__(self, access_token: str | None, repo_full_name: str) -> None:
+    def __init__(self, repo_full_name: str, access_token: str | None = None) -> None:
         self.logger = get_logger(self.__class__.__name__)
         self.github_access_token = access_token or os.environ.get("GITHUB_ACCESS_TOKEN")
 
