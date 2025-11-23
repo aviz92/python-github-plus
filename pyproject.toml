@@ -2,10 +2,34 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
-line-length = 100
-target-version = ["py39", "py310", "py311"]
+[project]
+name = "python-github-plus"
+version = "0.0.5"
+description = "Enhanced Python GitHub client."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Avi Zaguri" },]
+keywords = ["development", "github", "client", "api", "python"]
 
-[tool.isort]
-profile = "black"
-line_length = 100
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Topic :: System :: Logging",
+]
+
+dependencies = [
+    # uv add --requirements requirements.txt
+]
+
+[project.urls]
+Homepage = "https://github.com/aviz92/python-github-plus"
+Repository = "https://github.com/aviz92/python-github-plus"
+Issues = "https://github.com/aviz92/python-github-plus/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["python_github_plus*"]
+namespaces = false
