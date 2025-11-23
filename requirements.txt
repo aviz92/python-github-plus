@@ -1,9 +1,0 @@
-setuptools
-wheel
-python-dotenv
-pre-commit
-
-pytest
-pygithub
-
-custom-python-logger

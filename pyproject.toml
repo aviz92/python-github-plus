@@ -21,7 +21,13 @@ classifiers = [
 ]
 
 dependencies = [
-    # uv add --requirements requirements.txt
+    "custom-python-logger>=2.0.10",
+    "pre-commit>=4.5.0",
+    "pygithub>=2.8.1",
+    "pytest>=9.0.1",
+    "python-dotenv>=1.2.1",
+    "setuptools>=80.9.0",
+    "wheel>=0.45.1",
 ]
 
 [project.urls]
