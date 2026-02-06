@@ -4,20 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-github-plus"
-version = "0.0.5"
+version = "0.0.6"
 description = "Enhanced Python GitHub client."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Avi Zaguri" },]
 keywords = ["development", "github", "client", "api", "python"]
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
-    "Topic :: System :: Logging",
 ]
 
 dependencies = [
