@@ -1,3 +1,12 @@
+![PyPI version](https://img.shields.io/pypi/v/python-github-plus)
+![Python](https://img.shields.io/badge/python->=3.12-blue)
+![Development Status](https://img.shields.io/badge/status-stable-green)
+![Maintenance](https://img.shields.io/maintenance/yes/2026)
+![PyPI](https://img.shields.io/pypi/dm/python-github-plus)
+![License](https://img.shields.io/pypi/l/python-github-plus)
+
+---
+
 # Python GitHub Plus
 An enhanced Python client for GitHub that extends the functionality of the official `pygithub` package, providing better error handling, merge request management, branch operations, and more.
 
