@@ -15,7 +15,7 @@ from github.Tag import Tag
 from github.Workflow import Workflow
 from github.WorkflowRun import WorkflowRun
 
-from python_github_plus.const import LOGGER_NAME
+from python_github_plus.consts import LOGGER_NAME
 
 
 class GitHubPRStatus(Enum):
