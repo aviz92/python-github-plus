@@ -21,7 +21,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "custom-python-logger>=2.0.10",
+    "custom-python-logger>=4.0.0",
     "pre-commit>=4.5.0",
     "pygithub>=2.8.1",
     "pytest>=9.0.1",

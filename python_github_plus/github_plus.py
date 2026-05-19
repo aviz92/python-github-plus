@@ -15,6 +15,8 @@ from github.Tag import Tag
 from github.Workflow import Workflow
 from github.WorkflowRun import WorkflowRun
 
+from python_github_plus.const import LOGGER_NAME
+
 
 class GitHubPRStatus(Enum):
     OPEN = "open"
@@ -30,7 +32,7 @@ class GitHubWorkflowStatus(Enum):
 
 class GitHubProjectService:
     def __init__(self, repo: Repository) -> None:
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_logger(LOGGER_NAME)
         self.repo = repo
 
     def get_info(self) -> Repository:
@@ -56,7 +58,7 @@ class GitHubProjectService:
 
 class GitHubWorkflowService:
     def __init__(self, repo: Repository) -> None:
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_logger(LOGGER_NAME)
         self.repo = repo
 
     def list(self) -> list[Workflow]:
@@ -120,7 +122,7 @@ class GitHubWorkflowService:
 
 class GitHubBranchService:
     def __init__(self, repo: Repository) -> None:
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_logger(LOGGER_NAME)
         self.repo = repo
 
     def create(self, branch_name: str, from_branch: str) -> GitRef:
@@ -168,7 +170,7 @@ class GitHubBranchService:
 
 class GitHubTagService:
     def __init__(self, repo: Repository) -> None:
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_logger(LOGGER_NAME)
         self.repo = repo
 
     def create_from_sha(self, tag_name: str, sha: str, message: str | None = None) -> GitTag:
@@ -193,7 +195,7 @@ class GitHubTagService:
 
 class GitHubPRService:
     def __init__(self, repo: Repository) -> None:
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_logger(LOGGER_NAME)
         self.repo = repo
 
     def get_info(self, number: int) -> PullRequest:
@@ -243,7 +245,7 @@ class GitHubPRService:
 
 class GitHubFileService:
     def __init__(self, repo: Repository) -> None:
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_logger(LOGGER_NAME)
         self.repo = repo
 
     def get(self, path: str, ref: str = "main") -> ContentFile:
@@ -275,7 +277,7 @@ class GitHubFileService:
 
 class GitHubClient:
     def __init__(self, repo_full_name: str, access_token: str | None = None) -> None:
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_logger(LOGGER_NAME)
         self.github_access_token = access_token or os.environ.get("GITHUB_ACCESS_TOKEN")
 
         self.github = Github(auth=Auth.Token(self.github_access_token))
