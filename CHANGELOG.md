@@ -24,6 +24,8 @@
 ### Added
 - `GitHubClient(base_url=...)` / `GITHUB_BASE_URL` for GitHub Enterprise Server.
 - `GitHubClient.for_repo(repo_full_name)`: a client for another repository over the same connection.
+  The client's `Github` instance is created with `lazy=True`, so every repo shares one requester.
+  A `github` instance you pass in is used as is (create it with `lazy=True` for call-free construction).
 - `limit` on `branch.list`, `tag.list`, `project.list_members` and `workflow.list_runs`; paging stops once it is reached.
 - `pull_request.list(state, base, head, limit)` and `pull_request.files(number, limit)`.
 - `pull_request.create(body=..., draft=...)`; `pull_request.merge(merge_method, commit_title, commit_message)`.
@@ -31,6 +33,8 @@
 - `workflow.find(name_or_file_or_id)` and `workflow.get_run(run_id)`.
 - `branch.get(branch_name)`; `branch.protect(strict_status_checks=...)`.
 - `file.list_dir(path, ref)`.
+- Tests: mocked unit tests, read-only integration tests against a real repo, and write integration tests
+  against a sandbox repo (`pytest -m integration`; see `env.template` for `GITHUB_TEST_REPO`).
 
 ### Fixed
 - `workflow.wait_until_finished` never polled and always raised `TimeoutError` (inverted loop condition).
