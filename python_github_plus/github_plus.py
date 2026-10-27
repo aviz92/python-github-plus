@@ -5,7 +5,7 @@ import time
 from collections.abc import Iterable
 from enum import Enum
 from itertools import islice
-from typing import Literal, TypeVar
+from typing import TypeVar, get_args
 
 from custom_python_logger import get_logger
 from dotenv import load_dotenv
@@ -23,13 +23,9 @@ from github.Tag import Tag
 from github.Workflow import Workflow
 from github.WorkflowRun import WorkflowRun
 
-from python_github_plus.consts import LOGGER_NAME
+from python_github_plus.consts import DEFAULT_BASE_URL, LOGGER_NAME, MergeMethod, PRState
 
 T = TypeVar("T")
-
-DEFAULT_BASE_URL = "https://api.github.com"
-MergeMethod = Literal["merge", "squash", "rebase"]
-PRState = Literal["open", "closed", "all"]
 
 
 class GitHubPRStatus(Enum):
@@ -285,8 +281,8 @@ class GitHubPRService(_RepoService):
         commit_message: str | None = None,
     ) -> str:
         """Merge a pull request and return the merge commit sha. Raises ValueError if GitHub did not merge it."""
-        if merge_method not in {"merge", "squash", "rebase"}:
-            raise ValueError(f"merge_method must be 'merge', 'squash' or 'rebase', got '{merge_method}'")
+        if merge_method not in get_args(MergeMethod):
+            raise ValueError(f"merge_method must be one of {get_args(MergeMethod)}, got '{merge_method}'")
         result = self.repo.get_pull(number).merge(
             merge_method=merge_method, commit_title=commit_title or NotSet, commit_message=commit_message or NotSet
         )
