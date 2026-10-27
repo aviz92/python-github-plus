@@ -40,7 +40,7 @@ class GitHubWorkflowStatus(Enum):
     QUEUED = "queued"
 
 
-def take(items: Iterable[T], limit: int | None = None) -> list[T]:
+def _take(items: Iterable[T], limit: int | None = None) -> list[T]:
     """Materialize at most `limit` items. PyGithub fetches pages lazily, so a limit stops paging early."""
     if limit is None:
         return list(items)
@@ -63,7 +63,7 @@ class GitHubProjectService(_RepoService):
         return self.repo
 
     def list_members(self, limit: int | None = None) -> list[NamedUser]:
-        return take(self.repo.get_collaborators(), limit)
+        return _take(self.repo.get_collaborators(), limit)
 
     def add_member(self, username: str, permission: str = "push") -> None:
         self.repo.add_to_collaborators(username, permission)
@@ -123,7 +123,7 @@ class GitHubWorkflowService(_RepoService):
         """Runs of a workflow, newest first."""
         workflow = self.find(workflow_name)
         runs = workflow.get_runs(branch=branch) if branch else workflow.get_runs()
-        return take(runs, limit)
+        return _take(runs, limit)
 
     def get_run(self, run_id: int) -> WorkflowRun:
         return self.repo.get_workflow_run(run_id)
@@ -176,7 +176,7 @@ class GitHubBranchService(_RepoService):
         self.logger.info(f"✅ Branch '{branch_name}' deleted")
 
     def list(self, limit: int | None = None) -> list[Branch]:
-        return take(self.repo.get_branches(), limit)
+        return _take(self.repo.get_branches(), limit)
 
     def protect(
         self,
@@ -230,7 +230,7 @@ class GitHubTagService(_RepoService):
         self.logger.info(f"✅ Tag '{tag_name}' deleted")
 
     def list(self, limit: int | None = None) -> list[Tag]:
-        return take(self.repo.get_tags(), limit)
+        return _take(self.repo.get_tags(), limit)
 
 
 class GitHubPRService(_RepoService):
@@ -246,11 +246,11 @@ class GitHubPRService(_RepoService):
     ) -> list[PullRequest]:
         """Pull requests, newest first. `head` is `owner:branch`, as the GitHub API expects."""
         pulls = self.repo.get_pulls(state=state, base=base or NotSet, head=head or NotSet)
-        return take(pulls, limit)
+        return _take(pulls, limit)
 
     def files(self, number: int, limit: int | None = None) -> builtins.list[File]:
         """Files changed by a pull request, with their patches."""
-        return take(self.repo.get_pull(number).get_files(), limit)
+        return _take(self.repo.get_pull(number).get_files(), limit)
 
     def create(
         self, title: str, from_branch: str, target: str | None = None, body: str = "", draft: bool = False

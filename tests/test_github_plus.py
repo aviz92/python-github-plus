@@ -16,7 +16,6 @@ from python_github_plus.github_plus import (
     GitHubPRService,
     GitHubTagService,
     GitHubWorkflowService,
-    take,
 )
 
 
@@ -41,24 +40,25 @@ def fixture_workflows(repo: MagicMock) -> list[MagicMock]:
     return workflows
 
 
-# ---------- take / limits ----------
+# ---------- limits ----------
 
 
-def test_take_stops_early_without_materializing_everything() -> None:
+def test_limit_stops_paging_early(repo: MagicMock) -> None:
     consumed = []
 
-    def items():
+    def branches():
         for i in range(10_000):
             consumed.append(i)
             yield i
 
-    assert take(items(), 3) == [0, 1, 2]
+    repo.get_branches.return_value = branches()
+    assert GitHubBranchService(repo).list(limit=3) == [0, 1, 2]
     assert len(consumed) == 3
 
 
-def test_take_rejects_non_positive_limit() -> None:
+def test_limit_rejects_non_positive(repo: MagicMock) -> None:
     with pytest.raises(ValueError, match="at least 1"):
-        take([1, 2], 0)
+        GitHubBranchService(repo).list(limit=0)
 
 
 def test_list_methods_respect_limit(repo: MagicMock) -> None:
