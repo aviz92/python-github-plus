@@ -165,6 +165,16 @@ def test_branch_create_defaults_to_default_branch(repo: MagicMock) -> None:
     repo.get_git_ref.assert_called_once_with("heads/master")
 
 
+@pytest.mark.parametrize(
+    ("service", "ref"), [(GitHubBranchService, "heads/feature/x"), (GitHubTagService, "tags/feature/x")]
+)
+def test_delete_fetches_the_ref_before_deleting(repo: MagicMock, service: type, ref: str) -> None:
+    git_ref = repo.get_git_ref.return_value
+    service(repo).delete("feature/x")
+    repo.get_git_ref.assert_called_once_with(ref)
+    assert [name for name, *_ in git_ref.method_calls] == ["complete", "delete"]
+
+
 def test_protect_maps_review_settings_correctly(repo: MagicMock) -> None:
     GitHubBranchService(repo).protect("main", require_code_owner_reviews=True, required_approving_review_count=2)
     repo.get_branch.return_value.edit_protection.assert_called_once_with(

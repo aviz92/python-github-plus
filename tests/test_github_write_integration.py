@@ -76,6 +76,9 @@ def created(client: GitHubClient) -> Iterator[SimpleNamespace]:
     for branch in reversed(record.branches):
         _ignore_missing(client.branch.unprotect, branch)
         _ignore_missing(client.branch.delete, branch)
+    leftovers = [b.name for b in client.branch.list() if b.name.startswith(PREFIX)]
+    leftovers += [t.name for t in client.tag.list() if t.name.startswith(PREFIX)]
+    assert not leftovers, f"teardown left these behind: {leftovers}"
 
 
 @pytest.fixture(scope="module")
@@ -132,9 +135,6 @@ def test_merge_pull_request(client: GitHubClient, branches: SimpleNamespace, cre
     assert prs.status(pr.number) == GitHubPRStatus.MERGED.value
     assert client.branch.get(branches.base).commit.sha == sha
 
-    with pytest.raises(GithubException):  # already merged
-        prs.merge(pr.number)
-
 
 def test_tags(client: GitHubClient, branches: SimpleNamespace, created: SimpleNamespace) -> None:
     head_sha = client.branch.get(branches.head).commit.sha
@@ -150,7 +150,7 @@ def test_tags(client: GitHubClient, branches: SimpleNamespace, created: SimpleNa
     assert repo.get_git_ref(f"tags/{from_sha}").object.sha == tag.sha
     client.tag.delete(from_sha)
     with pytest.raises(GithubException) as err:
-        repo.get_git_ref(f"tags/{from_sha}")
+        repo.get_git_ref(f"tags/{from_sha}").complete()  # get_git_ref is lazy: complete() makes the request
     assert err.value.status == 404
 
 

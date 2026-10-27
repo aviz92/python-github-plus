@@ -49,6 +49,16 @@ def _take(items: Iterable[T], limit: int | None = None) -> list[T]:
     return list(islice(items, limit))
 
 
+def _delete_ref(repo: Repository, ref: str) -> None:
+    """
+    Delete a git ref. A lazy GitRef carries the read URL (`git/ref/...`), but DELETE lives at `git/refs/...`,
+    so fetch it first: that sets the canonical URL, and a missing ref raises 404 here.
+    """
+    git_ref = repo.get_git_ref(ref)
+    git_ref.complete()
+    git_ref.delete()
+
+
 class _RepoService:
     def __init__(self, repo: Repository) -> None:
         self.logger = get_logger(LOGGER_NAME)
@@ -172,7 +182,7 @@ class GitHubBranchService(_RepoService):
         return new_ref
 
     def delete(self, branch_name: str) -> None:
-        self.repo.get_git_ref(f"heads/{branch_name}").delete()
+        _delete_ref(self.repo, f"heads/{branch_name}")
         self.logger.info(f"✅ Branch '{branch_name}' deleted")
 
     def list(self, limit: int | None = None) -> list[Branch]:
@@ -226,7 +236,7 @@ class GitHubTagService(_RepoService):
         return self.create_from_sha(tag_name=tag_name, sha=sha, message=message)
 
     def delete(self, tag_name: str) -> None:
-        self.repo.get_git_ref(f"tags/{tag_name}").delete()
+        _delete_ref(self.repo, f"tags/{tag_name}")
         self.logger.info(f"✅ Tag '{tag_name}' deleted")
 
     def list(self, limit: int | None = None) -> list[Tag]:
