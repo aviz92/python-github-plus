@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-github-plus"
-version = "1.1.1"
+version = "2.0.0"
 description = "Enhanced Python GitHub client."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -22,10 +22,14 @@ classifiers = [
 
 dependencies = [
     "custom-python-logger>=4.0.0",
-    "pre-commit>=4.5.0",
-    "pygithub>=2.8.1",
-    "pytest>=9.0.1",
+    "pygithub>=2.10.0",
     "python-dotenv>=1.2.1",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.0",
+    "pytest>=9.0.1",
     "setuptools>=80.9.0",
     "wheel>=0.45.1",
 ]

@@ -8,20 +8,22 @@
 ---
 
 # Python GitHub Plus
-An enhanced Python client for GitHub that extends the functionality of the official `pygithub` package, providing better error handling, merge request management, branch operations, and more.
+An enhanced Python client for GitHub built on [PyGithub](https://github.com/PyGithub/PyGithub): one object per repository,
+grouped services, sensible defaults and errors you can act on.
 
 ---
 
 ## Features
-- ✅ Simplified connection to GitHub instances
-- ✅ Robust error handling with comprehensive logging
-- ✅ **Service-based architecture** for organized functionality
-- ✅ **Project management** (members, info, etc.)
-- ✅ **Branch operations** (create, delete, protect, list, etc.)
-- ✅ **Pull Request management** (create, merge, approve, assign, comment, etc.)
-- ✅ **Workflow operations** (trigger, monitor, wait for completion, etc.)
-- ✅ **Tag management** (create, delete, list, etc.)
-- ✅ **File operations** (read, create, update, delete, etc.)
+- ✅ **Service-based architecture**: `project`, `branch`, `pull_request`, `workflow`, `tag`, `file`
+- ✅ **Lazy connection**: creating a client makes no API calls; one connection serves many repositories (`for_repo`)
+- ✅ **GitHub.com and GitHub Enterprise Server** (`base_url`)
+- ✅ **Errors are raised, not logged and swallowed**: `GithubException` from the API, `ValueError` for bad input
+- ✅ **Default branch aware**: branch, tag, PR, workflow and file calls default to the repo's real default branch
+- ✅ **Bounded listing**: every list method takes `limit` and stops paging once it is reached
+- ✅ **Pull requests**: list, create (body, draft), files, assign, comment, approve, merge (merge/squash/rebase), close
+- ✅ **Workflows**: find by name, file name or id, trigger and get the run back, wait for completion
+- ✅ **Branches and tags**: create, delete, list, protect / unprotect
+- ✅ **Files**: read text files (including files over 1 MB) and list directories
 
 ---
 
@@ -33,13 +35,14 @@ pip install python-github-plus
 ---
 
 ## Configuration
-The package uses environment variables for authentication and configuration:
+Pass the token directly, or set environment variables. A `.env` file is loaded only when an argument is missing.
 
 ```bash
-# Required environment variables
-GitHub_ACCESS_TOKEN=your_github_access_token
-GitHub_URL=https://github.com  # Your GitHub instance URL (default: github.com)
+GITHUB_ACCESS_TOKEN=your_github_access_token
+GITHUB_BASE_URL=https://github.example.com/api/v3  # optional, GitHub Enterprise Server only
 ```
+
+---
 
 ## Examples
 
@@ -47,44 +50,45 @@ GitHub_URL=https://github.com  # Your GitHub instance URL (default: github.com)
 ```python
 from python_github_plus import GitHubClient
 
-# Initialize GitLab client with service-based architecture
 github_client = GitHubClient(
-    access_token="your_access_token",  # Note: parameter name changed
     repo_full_name="your-repo-owner/your-repo-name",
+    access_token="your_access_token",  # or GITHUB_ACCESS_TOKEN
+    # base_url="https://github.example.com/api/v3",  # GitHub Enterprise Server
 )
 
-# Access different services
-project_service = github_client.project
-branch_service = github_client.branch
-pr_service = github_client.pull_request
-workflows_service = github_client.workflows
-tag_service = github_client.tag
-file_service = github_client.file
+# Creating the client makes no API calls; check the token explicitly if you want to fail fast
+github_client.is_connected(raise_if_not_connected=True)
+
+# Another repository over the same connection
+other_repo = github_client.for_repo("your-repo-owner/another-repo")
+
+# Services
+github_client.project
+github_client.branch
+github_client.pull_request
+github_client.workflow
+github_client.tag
+github_client.file
 ```
 
 ### Branch Management
 ```python
-from python_github_plus import GitHubClient
+# Create a branch from the default branch (or pass from_branch="develop")
+branch_ref = github_client.branch.create(branch_name="feature/new-feature")
+print(f"Created branch: {branch_ref.ref}")
 
-github_client = GitHubClient(
-    access_token="your_access_token",  # Note: parameter name changed
-    repo_full_name="your-repo-owner/your-repo-name",
-)
-
-# Create a new branch
-branch = github_client.branch.create(
-    branch_name="feature/new-feature",
-    from_branch="main"
-)
-print(f"Created branch: {branch.ref}")
-
-# List branches
-branches = github_client.branch.list()
-for branch in branches:
+# List the first 50 branches
+for branch in github_client.branch.list(limit=50):
     print(f"Branch: {branch.name}")
 
-# Protect a branch
-github_client.branch.protect("main")
+# Protect a branch: 2 approvals, code owners, required CI check
+github_client.branch.protect(
+    "main",
+    required_approving_review_count=2,
+    require_code_owner_reviews=True,
+    require_status_checks=True,
+    status_check_contexts=["CI"],
+)
 
 # Delete a branch
 github_client.branch.delete("feature/old-feature")
@@ -92,136 +96,85 @@ github_client.branch.delete("feature/old-feature")
 
 ### Pull Request Management
 ```python
-from python_github_plus import GitHubClient
-
-github_client = GitHubClient(
-    access_token="your_access_token",  # Note: parameter name changed
-    repo_full_name="your-repo-owner/your-repo-name",
-)
-
-# Create a pull request
+# Open a draft PR into the default branch
 pr = github_client.pull_request.create(
     title="Add new feature",
     from_branch="feature/new-feature",
-    target="main"
+    body="What changed and why",
+    draft=True,
 )
-print(f"Created PR: !{pr.number}")
+print(f"Created PR: #{pr.number}")
 
-# Assign PR to a user
-github_client.pull_request.assign(pr.number, "username")
+# List open PRs into main, and the files a PR changes
+for open_pr in github_client.pull_request.list(state="open", base="main", limit=20):
+    print(f"#{open_pr.number} {open_pr.title}")
+for changed in github_client.pull_request.files(pr.number):
+    print(f"{changed.status}: {changed.filename} (+{changed.additions}/-{changed.deletions})")
 
-# Add a comment
+github_client.pull_request.assign(pr.number, ["username"])
 github_client.pull_request.add_comment(pr.number, "Great work!")
-
-# Approve the PR
 github_client.pull_request.approve(pr.number)
 
-# Merge the PR
-github_client.pull_request.merge(pr.number)
+# Merge; raises ValueError if GitHub did not merge it
+merge_sha = github_client.pull_request.merge(pr.number, merge_method="squash")
 ```
 
 ### Workflow Operations
-
 ```python
-import time
-from python_github_plus import GitHubClient
+# Find a workflow by display name, file name or id, and trigger it on the default branch
+run = github_client.workflow.trigger("ci.yml", inputs={"debug": "true"})
 
-github_client = GitHubClient(
-    access_token="your_access_token",  # Note: parameter name changed
-    repo_full_name="your-repo-owner/your-repo-name",
-)
+# github.com returns the new run; on servers that don't, take the newest run instead
+if run is None:
+    run = github_client.workflow.list_runs("ci.yml", limit=1)[0]
 
-# Trigger a workflows
-workflows = github_client.workflow.trigger(
-    workflow_name="CI",
-    branch_name="main",
-)
-print(f"Workflow triggered: {workflows.id}")
+print(f"Run {run.id}: {github_client.workflow.status(run.id)}")
 
-time.sleep(5)  # wait a bit for the workflow to register
-run_id = github_client.workflow.last_run_by_id(workflow_id=workflows.id)
-
-# Check workflow run status
-status = github_client.workflow.status(run_id=run_id.id)
-print(f"Workflow run status: {status}")
-
-# Wait for workflows completion
-final_status = github_client.workflow.wait_until_finished(
-    run_id=run_id.id,
-    check_interval=30,
-    timeout=3600
-)
-print(f"Workflow run completed with status: {final_status}")
+# Poll until the run completes (raises TimeoutError after `timeout` seconds)
+conclusion = github_client.workflow.wait_until_finished(run_id=run.id, check_interval=30, timeout=3600)
+print(f"Workflow run finished: {conclusion}")
 ```
 
 ### File Operations
 ```python
-from python_github_plus import GitHubClient
+# Read a file from the default branch (or pass ref="v1.0.0")
+content = github_client.file.fetch_content("README.md")
+print(content[:100])
 
-github_client = GitHubClient(
-    access_token="your_access_token",  # Note: parameter name changed
-    repo_full_name="your-repo-owner/your-repo-name",
-)
-
-# Read file content
-file_content = github_client.file.fetch_content(
-    file_path="README.md",
-    ref="main"
-)
-print(f"File content: {file_content[:100]}...")
+# List a directory
+for entry in github_client.file.list_dir("python_github_plus"):
+    print(f"{entry.type}: {entry.path}")
 ```
 
 ### Tag Management
 ```python
-from python_github_plus import GitHubClient
+# Annotated tag on the head of the default branch, or on a specific commit
+tag = github_client.tag.create(tag_name="v1.0.0", message="Release version 1.0.0")
+github_client.tag.create_from_sha(tag_name="v1.0.1", sha="abc123...", message="Hotfix")
 
-github_client = GitHubClient(
-    access_token="your_access_token",  # Note: parameter name changed
-    repo_full_name="your-repo-owner/your-repo-name",
-)
+for repo_tag in github_client.tag.list(limit=10):
+    print(f"Tag: {repo_tag.name}")
 
-# Create a tag
-tag = github_client.tag.create(
-    tag_name="v1.0.0",
-    from_branch="main",
-    message="Release version 1.0.0"
-)
-print(f"Created tag: {tag.name}")
-
-# List tags
-tags = github_client.tag.list()
-for tag in tags:
-    print(f"Tag: {tag.name}")
-
-# Delete a tag
 github_client.tag.delete("v0.9.0")
 ```
 
 ### Project Management
 ```python
-from python_github_plus import GitHubClient
-
-github_client = GitHubClient(
-    access_token="your_access_token",  # Note: parameter name changed
-    repo_full_name="your-repo-owner/your-repo-name",
-)
-
-# Get project information
 project_info = github_client.project.get_info()
-print(f"Project: {project_info.name}")
-print(f"Description: {project_info.description}")
+print(f"Project: {project_info.full_name} (default branch: {project_info.default_branch})")
 
-# List project members
-members = github_client.project.list_members()
-for member in members:
-    print(f"Member: {member.username}")
+for member in github_client.project.list_members(limit=100):
+    print(f"Member: {member.login}")
 
-# Add a member
-github_client.project.add_member("newuser", 30)  # 30 = Developer access level
-
-# Remove a member
+github_client.project.add_member("newuser", permission="push")  # pull, triage, push, maintain or admin
 github_client.project.remove_member("olduser")
 ```
+
+---
+
+## Upgrading from 1.x
+See [CHANGELOG.md](CHANGELOG.md). In short: errors now raise, defaults follow the repo's default branch,
+`workflow.trigger` returns the run, and `pull_request.merge` returns the merge commit sha.
 
 ---
 
