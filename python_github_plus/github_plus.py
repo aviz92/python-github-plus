@@ -340,6 +340,7 @@ class GitHubClient:
     A client for one repository. Construction makes no API calls: the repo is fetched on first use.
 
     Use `for_repo` to work with more repositories over the same connection.
+    A `github` instance passed in is used as is; create it with `lazy=True` to keep construction free of API calls.
     """
 
     def __init__(
@@ -357,7 +358,7 @@ class GitHubClient:
         self.repo_full_name = repo_full_name
         self.github = github or self._connect(access_token, base_url)
 
-        repo = self.github.get_repo(repo_full_name, lazy=True)
+        repo = self.github.get_repo(repo_full_name)
         self.project = GitHubProjectService(repo)
         self.workflow = GitHubWorkflowService(repo)
         self.branch = GitHubBranchService(repo)
@@ -374,7 +375,8 @@ class GitHubClient:
         url = base_url or os.environ.get("GITHUB_BASE_URL") or DEFAULT_BASE_URL
         if "://" not in url:
             url = f"https://{url}"
-        return Github(auth=Auth.Token(token), base_url=url.rstrip("/"))
+        # lazy: objects (the repo included) are fetched on first use, and every repo shares this requester
+        return Github(auth=Auth.Token(token), base_url=url.rstrip("/"), lazy=True)
 
     def for_repo(self, repo_full_name: str) -> "GitHubClient":
         """A client for another repository, sharing this client's connection."""

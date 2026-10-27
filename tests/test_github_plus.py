@@ -290,8 +290,8 @@ def test_client_makes_no_api_calls_and_shares_connection() -> None:
     assert github_cls.call_count == 1
     assert other.github is github
     github.get_user.assert_not_called()
-    assert github.get_repo.call_args_list[0].args == ("owner/a",)
-    assert all(call.kwargs == {"lazy": True} for call in github.get_repo.call_args_list)
+    assert github_cls.call_args.kwargs["lazy"] is True
+    assert [call.args for call in github.get_repo.call_args_list] == [("owner/a",), ("owner/b",)]
 
 
 @pytest.mark.parametrize(
